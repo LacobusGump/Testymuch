@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GUMP: Modulated Cinematic Void Engine - Optimized & Expanded</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      background: #0a0a0a;
+      color: #fff;
+      overflow: hidden;
+      touch-action: none;
+      height: 100vh;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .start-screen {
+      text-align: center;
+      z-index: 100;
+    }
+    
+    .start-btn {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+      letter-spacing: 3px;
+      backdrop-filter: blur(15px);
+      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    
+    .start-btn:hover {
+      border-color: rgba(255,255,255,0.4);
+      background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+      transform: scale(1.1);
+    }
+    
+    .evolution-space {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      opacity: 0;
+      transition: opacity 3s ease;
+    }
+    
+    .evolution-space.active { opacity: 1; }
+    
+    .orb {
+      position: absolute;
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #fff 0%, rgba(255,255,255,0.4) 40%, transparent 80%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      box-shadow: 0 0 60px rgba(255,255,255,0.6);
+      backdrop-filter: blur(8px);
+      filter: drop-shadow(0 0 20px rgba(255,255,255,0.3));
+      cursor: grab;
+    }
+    
+    .orb:active {
+      cursor: grabbing;
+    }
+    
+    .orb.pulse {
+      transform: translate(-50%, -50%) scale(1.5);
+    }
+    
+    .orb.void {
+      opacity: 0.5;
+      box-shadow: 0 0 100px rgba(255,215,0,0.6);
+      filter: drop-shadow(0 0 40px rgba(255,215,0,0.4));
+    }
+    
+    .ui-minimal {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      font-size: 9px;
+      color: rgba(255,255,255,0.6);
+      font-weight: normal;
+      letter-spacing: 1px;
+      background: rgba(0,0,0,0.2);
+      padding: 8px 12px;
+      border-radius: 4px;
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .stage-name {
+      font-size: 11px;
+      color: rgba(255,255,255,0.9);
+      margin-bottom: 4px;
+      font-weight: bold;
+    }
+    
+    .metric {
+      margin: 2px 0;
+      font-size: 8px;
+    }
+    
+    .hidden { display: none !important; }
+    
+    .instruction {
+      position: fixed;
+      top: 60%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      text-align: center;
+      letter-spacing: 2px;
+      opacity: 0;
+      transition: opacity 3s ease;
+      font-weight: normal;
+    }
+    
+    .instruction.show { opacity: 1; }
+
+    .cinematic-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.7) 100%);
+      opacity: 0;
+      transition: opacity 4s ease;
+      z-index: 2;
+    }
+    
+    .cinematic-overlay.active { opacity: 1; }
+    
+    .waveform {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 60px;
+      pointer-events: none;
+      z-index: 3;
+      opacity: 0.6;
+    }
+    
+    .wave-bar {
+      position: absolute;
+      bottom: 0;
+      width: 16px;
+      background: linear-gradient(0deg, rgba(255,255,255,0.6), rgba(255,255,255,0.1));
+      border-radius: 2px 2px 0 0;
+      transition: height 0.08s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .impact-flash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255,255,255,0.1);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .impact-flash.active {
+      opacity: 1;
+      transition: opacity 0.15s ease-out;
+    }
+
+    .error-message {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: red;
+      font-size: 16px;
+      z-index: 100;
+      display: none;
+    }
+
+    .retry-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #fff;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="start-screen" id="startScreen">
+    <div class="start-btn" id="startBtn">
+      AWAKEN
+    </div>
+  </div>
+  
+  <div class="evolution-space" id="evolutionSpace">
+    <div class="orb" id="orb"></div>
+    
+    <div class="instruction" id="instruction">DRAG ORB TO MODULATE SOUND</div>
+    
+    <div class="ui-minimal" id="uiMinimal">
+      <div class="stage-name" id="stageName">SILENCE</div>
+      <div class="metric">BPM: <span id="bpmDisplay">60</span> | INTENSITY: <span id="intensityDisplay">0%</span></div>
+    </div>
+    
+    <div class="waveform" id="waveform"></div>
+  </div>
+
+  <div class="cinematic-overlay" id="cinematicOverlay"></div>
+  <div class="impact-flash" id="impactFlash"></div>
+
+  <div class="error-message" id="errorMessage">
+    Permission denied for motion/orientation access.<br>Please allow in device settings or reload and try again.
+    <div class="retry-btn" id="retryBtn">Retry</div>
+  </div>
+
+  <script>
+    class ModulatedVoidEngine {
+      constructor() {
+        this.ctx = null;
+        this.active = false;
+        this.analyser = null;
+        this.dataArray = null;
+        
+        this.bpm = 60;
+        this.step = 0;
+        
+        this.motion = 0;
+        this.intensity = 0;
+        this.pos = { x: 50, y: 50 };
+        this.velocity = { x: 0, y: 0 };
+        this.lastAccel = { x: 0, y: 0, z: 0 };
+        this.motionHistory = [];
+        this.firstMovement = false;
+        this.noMotionCounter = 0;
+        this.isVoid = true;
+        
+        this.stage = 'VOID';
+        this.totalMotion = 0;
+        
+        this.masterGain = null;
+        this.limiter = null;
+        this.compressor = null;
+        this.masterEQ = null;
+        this.reverb = null;
+        this.delay = null;
+        
+        this.listener = null;
+        this.orientation = { alpha: 0, beta: 0, gamma: 0 };
+        
+        // Expanded layers with new ones for richer soundscape
+        this.layers = ['strings', 'harmonics', 'drums', 'bass', 'melody', 'ambient', 'healing', 'binaural', 'overtones'];
+        this.layerGains = {};
+        this.layerCompressors = {};
+        this.layerEQs = {};
+        this.layerPanners = {};
+        this.layerFilters = {};
+        
+        this.key = 'C';
+        this.mode = 'major';
+        this.scale = [0, 2, 4, 5, 7, 9, 11];
+        this.chordProgression = [[0, 4, 7], [5, 9, 0], [7, 11, 2], [0, 4, 7]];
+        this.currentChordIndex = 0;
+        
+        this.healingFrequencies = [174, 285, 396, 417, 528, 639, 741, 852, 963];
+        
+        this.ambientNoise = null;
+        this.ambientGain = null;
+        this.ambientFilter = null;
+        this.ambientLFO = null;
+        
+        this.elements = {};
+        this.waveBars = [];
+        this.isDragging = false;
+        this.dragOffset = { x: 0, y: 0 };
+        
+        // New: Psychoacoustic parameters based on equal-loudness contours (Fletcher-Munson curves)
+        this.equalLoudnessContour = this.generateEqualLoudnessContour();
+        
+        // New: For binaural beats in healing layer
+        this.binauralDelta = 4; // Hz difference for theta waves
+        
+        // New: Impulse response for realistic reverb (simulated hall)
+        this.reverbImpulse = null;
+        
+        this.init();
+      }
+
+      init() {
+        ['startScreen', 'startBtn', 'evolutionSpace', 'orb', 'instruction',
+         'stageName', 'bpmDisplay', 'intensityDisplay', 'uiMinimal',
+         'cinematicOverlay', 'waveform', 'impactFlash', 'errorMessage', 'retryBtn']
+        .forEach(id => this.elements[id] = document.getElementById(id));
+        
+        this.elements.startBtn.addEventListener('click', () => this.requestPermissionsAndStart());
+        this.elements.retryBtn.addEventListener('click', () => this.requestPermissionsAndStart());
+        this.setupWaveformVisualizer();
+        this.setupOrbDrag();
+      }
+
+      async requestPermissionsAndStart() {
+        try {
+          let motionPermission = 'granted';
+          let orientationPermission = 'granted';
+
+          if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            orientationPermission = await DeviceOrientationEvent.requestPermission();
+          }
+          if (typeof DeviceMotionEvent.requestPermission === 'function') {
+            motionPermission = await DeviceMotionEvent.requestPermission();
+          }
+
+          if (motionPermission !== 'granted' || orientationPermission !== 'granted') {
+            this.elements.errorMessage.style.display = 'block';
+            return;
+          }
+
+          this.elements.errorMessage.style.display = 'none';
+
+          await this.initializeAudioAndEvents();
+        } catch (e) {
+          console.error('Permission request failed:', e);
+          this.elements.errorMessage.style.display = 'block';
+        }
+      }
+
+      async initializeAudioAndEvents() {
+        // Optimization: Use higher latency hint for better quality on desktop
+        this.ctx = new AudioContext({ 
+          sampleRate: 96000, // Higher sample rate for audiophile quality (if supported)
+          latencyHint: 'playback' 
+        });
+        await this.ctx.resume();
+        await this.setupReverbImpulse(); // New: Load realistic impulse response
+        this.setupAudioChain();
+        this.setupAmbientBackground();
+        this.setLayerPositions();
+        this.setupMotionDetection();
+        this.setupOrientationDetection();
+
+        this.elements.startScreen.classList.add('hidden');
+        this.elements.evolutionSpace.classList.add('active');
+        
+        setTimeout(() => {
+          this.elements.instruction.classList.add('show');
+          setTimeout(() => this.elements.instruction.classList.remove('show'), 5000);
+        }, 1500);
+
+        this.active = true;
+        this.startSequencer();
+        this.animate();
+      }
+
+      // New: Generate or load impulse response for convolution reverb (simulating a concert hall)
+      async setupReverbImpulse() {
+        // For simplicity, generate a synthetic impulse; in production, fetch a real IR file
+        const length = 5; // seconds
+        const decay = 3;
+        const buffer = this.ctx.createBuffer(2, this.ctx.sampleRate * length, this.ctx.sampleRate);
+        for (let channel = 0; channel < 2; channel++) {
+          const data = buffer.getChannelData(channel);
+          for (let i = 0; i < data.length; i++) {
+            data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, decay);
+          }
+        }
+        this.reverbImpulse = buffer;
+      }
+
+      setupWaveformVisualizer() {
+        // Optimization: More bars for finer visualization
+        for (let i = 0; i < 32; i++) { // Doubled resolution
+          const bar = document.createElement('div');
+          bar.className = 'wave-bar';
+          bar.style.left = (i * (100 / 32)) + '%';
+          bar.style.width = (100 / 32) + '%';
+          bar.style.height = '0px';
+          this.elements.waveform.appendChild(bar);
+          this.waveBars.push(bar);
+        }
+      }
+
+      setupOrbDrag() {
+        const orb = this.elements.orb;
+        
+        const startDrag = (e) => {
+          e.preventDefault();
+          this.isDragging = true;
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          this.dragOffset.x = clientX - orb.getBoundingClientRect().left;
+          this.dragOffset.y = clientY - orb.getBoundingClientRect().top;
+        };
+        
+        const drag = (e) => {
+          if (!this.isDragging) return;
+          e.preventDefault();
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          this.pos.x = ((clientX - this.dragOffset.x) / window.innerWidth) * 100;
+          this.pos.y = ((clientY - this.dragOffset.y) / window.innerHeight) * 100;
+          this.pos.x = Math.max(0, Math.min(100, this.pos.x));
+          this.pos.y = Math.max(0, Math.min(100, this.pos.y));
+          this.motion = 5; // Simulate motion during drag
+          this.noMotionCounter = 0;
+          if (this.isVoid) this.exitVoid();
+        };
+        
+        const endDrag = () => {
+          this.isDragging = false;
+        };
+        
+        orb.addEventListener('mousedown', startDrag);
+        orb.addEventListener('touchstart', startDrag);
+        window.addEventListener('mousemove', drag);
+        window.addEventListener('touchmove', drag);
+        window.addEventListener('mouseup', endDrag);
+        window.addEventListener('touchend', endDrag);
+      }
+
+      setupMotionDetection() {
+        window.addEventListener('devicemotion', e => {
+          if (!this.active) return;
+          
+          const acc = e.accelerationIncludingGravity;
+          if (!acc) return;
+          
+          const dx = Math.abs(acc.x - this.lastAccel.x);
+          const dy = Math.abs(acc.y - this.lastAccel.y);
+          const dz = Math.abs(acc.z - this.lastAccel.z);
+          
+          const newMotion = Math.sqrt(dx*dx + dy*dy + dz*dz);
+          this.motion = this.motion * 0.85 + newMotion * 0.15;
+          this.motionHistory.push(this.motion);
+          if (this.motionHistory.length > 60) this.motionHistory.shift(); // Longer history for smoother intensity
+          
+          this.intensity = this.motionHistory.reduce((sum, m) => sum + m, 0) / this.motionHistory.length;
+          
+          this.velocity.x += acc.x * 0.02;
+          this.velocity.y += acc.y * 0.02;
+          this.pos.x = Math.max(0, Math.min(100, this.pos.x + this.velocity.x));
+          this.pos.y = Math.max(0, Math.min(100, this.pos.y + this.velocity.y));
+          this.velocity.x *= 0.92;
+          this.velocity.y *= 0.92;
+          
+          this.lastAccel = { x: acc.x || 0, y: acc.y || 0, z: acc.z || 0 };
+          
+          if (this.motion > 1 && !this.firstMovement) {
+            this.firstMovement = true;
+            this.stage = 'ACTIVE';
+          }
+          
+          if (this.motion > 4) {
+            this.triggerDrums();
+          }
+          
+          if (this.motion < 0.4) {
+            this.noMotionCounter++;
+            if (this.noMotionCounter > 40) this.enterVoid();
+          } else {
+            this.noMotionCounter = 0;
+            if (this.isVoid) this.exitVoid();
+          }
+          
+          this.updateModulation();
+          this.updateAmbient();
+        });
+      }
+
+      setupOrientationDetection() {
+        window.addEventListener('deviceorientation', e => {
+          if (!this.active) return;
+          this.orientation.alpha = e.alpha || 0;
+          this.orientation.beta = e.beta || 0;
+          this.orientation.gamma = e.gamma || 0;
+          this.updateListenerOrientation();
+        });
+      }
+
+      updateListenerOrientation() {
+        if (!this.listener) return;
+        const now = this.ctx.currentTime;
+        const alphaRad = this.orientation.alpha * Math.PI / 180;
+        const betaRad = this.orientation.beta * Math.PI / 180;
+        const gammaRad = this.orientation.gamma * Math.PI / 180;
+        
+        const forwardX = Math.cos(alphaRad) * Math.cos(betaRad);
+        const forwardY = Math.sin(alphaRad) * Math.cos(betaRad);
+        const forwardZ = Math.sin(betaRad);
+        
+        const upX = -Math.cos(alphaRad) * Math.sin(betaRad) * Math.sin(gammaRad) - Math.sin(alphaRad) * Math.cos(gammaRad);
+        const upY = -Math.sin(alphaRad) * Math.sin(betaRad) * Math.sin(gammaRad) + Math.cos(alphaRad) * Math.cos(gammaRad);
+        const upZ = Math.cos(betaRad) * Math.sin(gammaRad);
+        
+        this.listener.forwardX.linearRampToValueAtTime(forwardX, now + 0.05);
+        this.listener.forwardY.linearRampToValueAtTime(forwardY, now + 0.05);
+        this.listener.forwardZ.linearRampToValueAtTime(forwardZ, now + 0.05);
+        this.listener.upX.linearRampToValueAtTime(upX, now + 0.05);
+        this.listener.upY.linearRampToValueAtTime(upY, now + 0.05);
+        this.listener.upZ.linearRampToValueAtTime(upZ, now + 0.05);
+      }
+
+      setupAudioChain() {
+        this.analyser = this.ctx.createAnalyser();
+        this.analyser.fftSize = 4096; // Higher FFT size for better frequency resolution
+        this.analyser.smoothingTimeConstant = 0.75; // Slightly smoother for visual appeal
+        this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+        
+        this.limiter = this.ctx.createDynamicsCompressor();
+        this.limiter.threshold.value = -6; // Softer limiting for more dynamics
+        this.limiter.knee.value = 4;
+        this.limiter.ratio.value = 20;
+        this.limiter.attack.value = 0.001;
+        this.limiter.release.value = 0.1;
+        
+        this.compressor = this.ctx.createDynamicsCompressor();
+        this.compressor.threshold.value = -24; // Lower threshold for audiophile transparency
+        this.compressor.knee.value = 12;
+        this.compressor.ratio.value = 4;
+        this.compressor.attack.value = 0.003;
+        this.compressor.release.value = 0.2;
+        
+        this.masterEQ = this.createAdvancedMultibandEQ(); // Expanded EQ
+        
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.value = 1.0; // Unity gain, rely on limiter
+        
+        this.reverb = this.ctx.createConvolver();
+        this.reverb.buffer = this.reverbImpulse; // Use realistic IR
+        const reverbGain = this.ctx.createGain();
+        reverbGain.gain.value = 0.4; // Slightly wetter mix
+        this.reverb.connect(reverbGain);
+        reverbGain.connect(this.compressor);
+        
+        this.delay = this.ctx.createDelay(2.0); // Longer max delay
+        this.delay.delayTime.value = 0.5;
+        const delayFeedback = this.ctx.createGain();
+        delayFeedback.gain.value = 0.4;
+        const delayFilter = this.ctx.createBiquadFilter();
+        delayFilter.type = 'lowpass';
+        delayFilter.frequency.value = 4000;
+        delayFilter.Q.value = 1.0;
+        this.delay.connect(delayFilter);
+        delayFilter.connect(delayFeedback);
+        delayFeedback.connect(this.delay);
+        const delayMix = this.ctx.createGain();
+        delayMix.gain.value = 0.25;
+        this.delay.connect(delayMix);
+        delayMix.connect(this.compressor);
+        
+        this.listener = this.ctx.listener;
+        
+        this.layers.forEach(layer => {
+          this.layerGains[layer] = this.ctx.createGain();
+          this.layerCompressors[layer] = this.ctx.createDynamicsCompressor();
+          this.layerEQs[layer] = this.createLayerEQ(layer);
+          this.layerPanners[layer] = this.ctx.createPanner();
+          this.layerPanners[layer].panningModel = 'HRTF'; // For binaural spatial audio
+          this.layerPanners[layer].distanceModel = 'exponential'; // More natural attenuation
+          this.layerPanners[layer].refDistance = 1;
+          this.layerPanners[layer].maxDistance = 10000;
+          this.layerPanners[layer].rolloffFactor = 1.5;
+          this.layerPanners[layer].coneInnerAngle = 60;
+          this.layerPanners[layer].coneOuterAngle = 120;
+          this.layerPanners[layer].coneOuterGain = -18;
+          
+          this.layerFilters[layer] = this.ctx.createBiquadFilter();
+          this.layerFilters[layer].type = 'lowpass';
+          this.layerFilters[layer].frequency.value = 22050; // Higher cutoff for quality
+          this.layerFilters[layer].Q.value = 0.7;
+          
+          this.layerGains[layer].connect(this.layerFilters[layer]);
+          this.layerFilters[layer].connect(this.layerCompressors[layer]);
+          this.layerCompressors[layer].connect(this.layerEQs[layer]);
+          this.layerEQs[layer].connect(this.layerPanners[layer]);
+          this.layerPanners[layer].connect(this.compressor);
+          
+          if (['strings', 'harmonics', 'ambient', 'healing', 'melody', 'overtones'].includes(layer)) {
+            const revSend = this.ctx.createGain();
+            revSend.gain.value = layer === 'ambient' ? 0.5 : layer === 'healing' ? 0.4 : 0.3;
+            this.layerPanners[layer].connect(revSend);
+            revSend.connect(this.reverb);
+          }
+          
+          if (['harmonics', 'melody', 'healing', 'binaural'].includes(layer)) {
+            const delSend = this.ctx.createGain();
+            delSend.gain.value = 0.3;
+            this.layerPanners[layer].connect(delSend);
+            delSend.connect(this.delay);
+          }
+        });
+        
+        this.compressor.connect(this.masterEQ);
+        this.masterEQ.connect(this.limiter);
+        this.limiter.connect(this.analyser);
+        this.analyser.connect(this.masterGain);
+        this.masterGain.connect(this.ctx.destination);
+      }
+
+      // Expanded: More bands and psychoacoustic adjustments
+      createAdvancedMultibandEQ() {
+        const input = this.ctx.createGain();
+        
+        const lowShelf = this.ctx.createBiquadFilter();
+        lowShelf.type = 'lowshelf';
+        lowShelf.frequency.value = 80;
+        lowShelf.gain.value = 2.0;
+        
+        const lowMid = this.ctx.createBiquadFilter();
+        lowMid.type = 'peaking';
+        lowMid.frequency.value = 250;
+        lowMid.Q.value = 1.0;
+        lowMid.gain.value = 1.0;
+        
+        const mid = this.ctx.createBiquadFilter();
+        mid.type = 'peaking';
+        mid.frequency.value = 1000;
+        mid.Q.value = 1.0;
+        mid.gain.value = 0.5;
+        
+        const highMid = this.ctx.createBiquadFilter();
+        highMid.type = 'peaking';
+        highMid.frequency.value = 3000;
+        highMid.Q.value = 1.0;
+        highMid.gain.value = 1.5;
+        
+        const highShelf = this.ctx.createBiquadFilter();
+        highShelf.type = 'highshelf';
+        highShelf.frequency.value = 8000;
+        highShelf.gain.value = 3.0;
+        
+        input.connect(lowShelf);
+        lowShelf.connect(lowMid);
+        lowMid.connect(mid);
+        mid.connect(highMid);
+        highMid.connect(highShelf);
+        
+        return input;
+      }
+
+      createLayerEQ(layer) {
+        const input = this.ctx.createGain();
+        
+        const low = this.ctx.createBiquadFilter();
+        low.type = 'lowshelf';
+        low.frequency.value = 120;
+        low.gain.value = layer === 'drums' || layer === 'bass' ? 4 : layer === 'ambient' ? -4 : 0;
+        
+        const mid = this.ctx.createBiquadFilter();
+        mid.type = 'peaking';
+        mid.frequency.value = 1500;
+        mid.Q.value = 1.4;
+        mid.gain.value = layer === 'strings' || layer === 'melody' ? 2.5 : layer === 'harmonics' ? -2 : 0;
+        
+        const high = this.ctx.createBiquadFilter();
+        high.type = 'highshelf';
+        high.frequency.value = 8000;
+        high.gain.value = layer === 'healing' || layer === 'ambient' ? 3 : layer === 'drums' ? -3 : 1.5;
+        
+        input.connect(low);
+        low.connect(mid);
+        mid.connect(high);
+        
+        return input;
+      }
+
+      // New: Psychoacoustic equal-loudness contour generator (approx Fletcher-Munson at 60 phon)
+      generateEqualLoudnessContour() {
+        // Returns a function that gives dB boost for a given frequency
+        return (freq) => {
+          if (freq < 20) return 0;
+          const f = Math.max(20, Math.min(20000, freq));
+          const a = 0.06175 * f;
+          const b = Math.pow(f / 1000, 4);
+          return (0.6 * (Math.pow(10, 0.05 * (Math.pow(10, 0.025 * (a - Math.log10(b + 1)))) - 1))) / 10;
+        };
+      }
+
+      // Optimization: Apply equal-loudness to gains
+      applyPsychoacousticGain(gainNode, freq, targetGain, time) {
+        const boost = this.equalLoudnessContour(freq);
+        gainNode.gain.linearRampToValueAtTime(targetGain * (1 + boost), time);
+      }
+
+      setupAmbientBackground() {
+        // Optimization: Use brown noise for more natural ambient (lower freq emphasis)
+        const bufferSize = this.ctx.sampleRate * 10; // Longer loop for less repetition
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        let last = 0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          data[i] = (last + (0.02 * white)) / 1.02; // Brown noise formula
+          last = data[i];
+          data[i] *= 3.5;
+        }
+        
+        this.ambientNoise = this.ctx.createBufferSource();
+        this.ambientNoise.buffer = buffer;
+        this.ambientNoise.loop = true;
+        
+        this.ambientFilter = this.ctx.createBiquadFilter();
+        this.ambientFilter.type = 'lowpass';
+        this.ambientFilter.frequency.value = 400;
+        this.ambientFilter.Q.value = 0.4;
+        
+        this.ambientGain = this.ctx.createGain();
+        this.ambientGain.gain.value = 0.06;
+        
+        this.ambientLFO = this.ctx.createOscillator();
+        this.ambientLFO.type = 'sine';
+        this.ambientLFO.frequency.value = 0.05; // Slower modulation
+        const lfoGain = this.ctx.createGain();
+        lfoGain.gain.value = 150;
+        this.ambientLFO.connect(lfoGain);
+        lfoGain.connect(this.ambientFilter.frequency);
+        
+        this.ambientNoise.connect(this.ambientFilter);
+        this.ambientFilter.connect(this.ambientGain);
+        this.ambientGain.connect(this.layerGains.ambient);
+        this.ambientNoise.start();
+        this.ambientLFO.start();
+      }
+
+      setLayerPositions() {
+        // Expanded: More dynamic positions with z-depth variation
+        const positions = {
+          strings: { x: 0, y: 0, z: -5 },
+          harmonics: { x: 4, y: -4, z: -8 },
+          drums: { x: -4, y: 4, z: -3 },
+          bass: { x: 4, y: 4, z: -4 },
+          melody: { x: -4, y: -4, z: -6 },
+          ambient: { x: 0, y: 5, z: 15 },
+          healing: { x: 0, y: 3, z: 12 },
+          binaural: { x: -2, y: 2, z: -10 },
+          overtones: { x: 2, y: -2, z: -7 }
+        };
+        
+        Object.entries(positions).forEach(([layer, pos]) => {
+          this.layerPanners[layer].positionX.value = pos.x;
+          this.layerPanners[layer].positionY.value = pos.y;
+          this.layerPanners[layer].positionZ.value = pos.z;
+        });
+      }
+
+      updateModulation() {
+        const now = this.ctx.currentTime;
+        const normX = this.pos.x / 100;
+        const normY = this.pos.y / 100;
+        
+        const drumsVal = (1 - normX) * normY;
+        const bassVal = normX * normY;
+        const melodyVal = (1 - normX) * (1 - normY);
+        const harmonicsVal = normX * (1 - normY);
+        const overtonesVal = (drumsVal + melodyVal) / 2;
+        const binauralVal = (harmonicsVal + bassVal) / 2;
+        
+        this.layerGains.drums.gain.linearRampToValueAtTime(drumsVal * 0.85, now + 0.15);
+        this.layerGains.bass.gain.linearRampToValueAtTime(bassVal * 0.75, now + 0.15);
+        this.layerGains.melody.gain.linearRampToValueAtTime(melodyVal * 0.65, now + 0.15);
+        this.layerGains.harmonics.gain.linearRampToValueAtTime(harmonicsVal * 0.55, now + 0.15);
+        this.layerGains.overtones.gain.linearRampToValueAtTime(overtonesVal * 0.45, now + 0.15);
+        this.layerGains.binaural.gain.linearRampToValueAtTime(binauralVal * 0.35, now + 0.15);
+        
+        this.bpm = 40 + drumsVal * 80 + this.intensity * 20; // Wider BPM range
+        
+        // Dynamic panning with motion influence
+        this.layerPanners.drums.positionX.linearRampToValueAtTime(-6 + normX * 12, now + 0.15);
+        this.layerPanners.drums.positionY.linearRampToValueAtTime(6 - normY * 12, now + 0.15);
+        
+        this.layerPanners.bass.positionX.linearRampToValueAtTime(6 - normX * 12, now + 0.15);
+        this.layerPanners.bass.positionY.linearRampToValueAtTime(6 - normY * 12, now + 0.15);
+        
+        this.layerPanners.melody.positionX.linearRampToValueAtTime(-6 + normX * 12, now + 0.15);
+        this.layerPanners.melody.positionY.linearRampToValueAtTime(-6 + normY * 12, now + 0.15);
+        
+        this.layerPanners.harmonics.positionX.linearRampToValueAtTime(6 - normX * 12, now + 0.15);
+        this.layerPanners.harmonics.positionY.linearRampToValueAtTime(-6 + normY * 12, now + 0.15);
+        
+        // New layers panning
+        this.layerPanners.overtones.positionX.linearRampToValueAtTime(0 + normX * 4 - 2, now + 0.15);
+        this.layerPanners.binaural.positionX.linearRampToValueAtTime(-normX * 4 + 2, now + 0.15);
+      }
+
+      // Optimization: Use additive synthesis with harmonic series for strings
+      playStrings(now) {
+        const baseFreq = this.noteToFreq(this.chordProgression[this.currentChordIndex][0], 3);
+        const numPartials = 16; // More partials for richer, audiophile tone
+        
+        for (let note of this.chordProgression[this.currentChordIndex]) {
+          const chordFreq = this.noteToFreq(note, 3);
+          for (let p = 1; p <= numPartials; p++) {
+            const osc = this.ctx.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.value = chordFreq * p;
+            osc.detune.value = (Math.random() - 0.5) * 0.5; // Micro-detuning for warmth
+            
+            const env = this.ctx.createGain();
+            const partialGain = 1 / p; // Natural harmonic attenuation
+            this.applyPsychoacousticGain(env, osc.frequency.value, partialGain * 0.3, now + 0.1);
+            env.gain.exponentialRampToValueAtTime(0.001, now + 10);
+            
+            osc.connect(env);
+            env.connect(this.layerGains.strings);
+            osc.start(now);
+            osc.stop(now + 10);
+          }
+        }
+      }
+
+      // Expansion: Enhanced harmonics with inharmonic partials (bell-like, based on psychoacoustics papers on timbre perception)
+      playHarmonics(now) {
+        const chord = this.chordProgression[this.currentChordIndex];
+        chord.forEach((note, i) => {
+          const baseFreq = this.noteToFreq(note, 4 + i);
+          const numHarmonics = 8;
+          for (let h = 1; h <= numHarmonics; h++) {
+            const osc = this.ctx.createOscillator();
+            osc.type = 'sine';
+            // Inharmonic shift: slight deviation for realism (ref: papers on stretched tuning in perception)
+            const inharmonic = 1 + (h * h * 0.0001); // Beta inharmonicity coefficient
+            osc.frequency.value = baseFreq * h * inharmonic;
+            osc.detune.value = (Math.random() - 0.5) * 3;
+            
+            const env = this.ctx.createGain();
+            const harmonicGain = 0.2 / Math.sqrt(h); // Smoother rolloff
+            this.applyPsychoacousticGain(env, osc.frequency.value, harmonicGain, now + 0.8);
+            env.gain.exponentialRampToValueAtTime(0.001, now + 6);
+            
+            osc.connect(env);
+            env.connect(this.layerGains.harmonics);
+            osc.start(now);
+            osc.stop(now + 6);
+          }
+        });
+      }
+
+      triggerDrums() {
+        const now = this.ctx.currentTime;
+        const kickFreq = 50 + this.motion * 4;
+        const osc = this.ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(kickFreq * 5, now);
+        osc.frequency.exponentialRampToValueAtTime(kickFreq, now + 0.03);
+        
+        const env = this.ctx.createGain();
+        env.gain.setValueAtTime(1.0, now);
+        env.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        
+        const comp = this.ctx.createDynamicsCompressor();
+        comp.threshold.value = -18;
+        comp.ratio.value = 8;
+        
+        osc.connect(comp);
+        comp.connect(env);
+        env.connect(this.layerGains.drums);
+        osc.start(now);
+        osc.stop(now + 0.3);
+        
+        // New: Add transient noise for punch (audiophile percussive realism)
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = this.createNoiseBuffer(0.05);
+        const noiseEnv = this.ctx.createGain();
+        noiseEnv.gain.setValueAtTime(0.4, now);
+        noiseEnv.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+        noise.connect(noiseEnv);
+        noiseEnv.connect(this.layerGains.drums);
+        noise.start(now);
+      }
+
+      // Helper for drum transient
+      createNoiseBuffer(duration) {
+        const bufferSize = this.ctx.sampleRate * duration;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+        return buffer;
+      }
+
+      playBass(now) {
+        const baseFreq = this.noteToFreq(this.chordProgression[this.currentChordIndex][0], 2);
+        // Optimization: FM synthesis for bass instead of Karplus-Strong for more control and quality
+        const carrier = this.ctx.createOscillator();
+        carrier.type = 'sine';
+        carrier.frequency.value = baseFreq;
+        
+        const modulator = this.ctx.createOscillator();
+        modulator.type = 'sine';
+        modulator.frequency.value = baseFreq * 2;
+        const modGain = this.ctx.createGain();
+        modGain.gain.value = baseFreq * 1.5; // Modulation index
+        
+        modulator.connect(modGain);
+        modGain.connect(carrier.frequency);
+        
+        const env = this.ctx.createGain();
+        env.gain.setValueAtTime(0, now);
+        env.gain.linearRampToValueAtTime(0.8, now + 0.08);
+        env.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+        
+        carrier.connect(env);
+        env.connect(this.layerGains.bass);
+        carrier.start(now);
+        modulator.start(now);
+        carrier.stop(now + 1.2);
+        modulator.stop(now + 1.2);
+      }
+
+      playMelody(now) {
+        const noteIndex = Math.floor(Math.random() * this.scale.length);
+        const freq = this.noteToFreq(this.scale[noteIndex], 5);
+        // Expansion: Subtractive synthesis with oversampling-like filter sweep
+        const osc = this.ctx.createOscillator();
+        osc.type = 'sawtooth';
+        osc.frequency.value = freq;
+        
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(600, now);
+        filter.frequency.exponentialRampToValueAtTime(4000, now + 0.25);
+        filter.frequency.exponentialRampToValueAtTime(800, now + 1.8);
+        filter.Q.value = 3;
+        
+        const env = this.ctx.createGain();
+        env.gain.setValueAtTime(0, now);
+        env.gain.linearRampToValueAtTime(0.6, now + 0.04);
+        env.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
+        
+        osc.connect(filter);
+        filter.connect(env);
+        env.connect(this.layerGains.melody);
+        osc.start(now);
+        osc.stop(now + 1.8);
+      }
+
+      playHealing(now) {
+        const freqIndex = this.step % this.healingFrequencies.length;
+        const freq = this.healingFrequencies[freqIndex];
+        const osc = this.ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        
+        const env = this.ctx.createGain();
+        env.gain.setValueAtTime(0, now);
+        env.gain.linearRampToValueAtTime(0.2, now + 2.5);
+        env.gain.exponentialRampToValueAtTime(0.001, now + 10);
+        
+        osc.connect(env);
+        env.connect(this.layerGains.healing);
+        osc.start(now);
+        osc.stop(now + 10);
+      }
+
+      // New layer: Binaural beats for psychoacoustic immersion (ref: papers on binaural auditory beats for relaxation)
+      playBinaural(now) {
+        const baseFreq = 200 + this.intensity * 10; // Mid-range for beats
+        const leftOsc = this.ctx.createOscillator();
+        leftOsc.type = 'sine';
+        leftOsc.frequency.value = baseFreq;
+        
+        const rightOsc = this.ctx.createOscillator();
+        rightOsc.type = 'sine';
+        rightOsc.frequency.value = baseFreq + this.binauralDelta;
+        
+        const leftPan = this.ctx.createStereoPanner();
+        leftPan.pan.value = -1;
+        const rightPan = this.ctx.createStereoPanner();
+        rightPan.pan.value = 1;
+        
+        const env = this.ctx.createGain();
+        env.gain.setValueAtTime(0.1, now);
+        env.gain.exponentialRampToValueAtTime(0.001, now + 8);
+        
+        leftOsc.connect(leftPan);
+        leftPan.connect(env);
+        rightOsc.connect(rightPan);
+        rightPan.connect(env);
+        env.connect(this.layerGains.binaural);
+        
+        leftOsc.start(now);
+        rightOsc.start(now);
+        leftOsc.stop(now + 8);
+        rightOsc.stop(now + 8);
+      }
+
+      // New layer: Overtone series generation with perceptual masking consideration
+      playOvertones(now) {
+        const baseFreq = this.noteToFreq(this.chordProgression[this.currentChordIndex][0], 4);
+        const numOvertones = 12;
+        for (let o = 2; o <= numOvertones; o++) { // Start from 2nd harmonic
+          const osc = this.ctx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.value = baseFreq * o;
+          
+          const env = this.ctx.createGain();
+          const overtoneGain = 0.15 / o; // Attenuate higher overtones
+          // Apply masking: reduce gain if close to other freqs (simplified)
+          if (o % 2 === 0) overtoneGain *= 0.8;
+          this.applyPsychoacousticGain(env, osc.frequency.value, overtoneGain, now + 1);
+          env.gain.exponentialRampToValueAtTime(0.001, now + 7);
+          
+          osc.connect(env);
+          env.connect(this.layerGains.overtones);
+          osc.start(now);
+          osc.stop(now + 7);
+        }
+      }
+
+      updateAmbient() {
+        const now = this.ctx.currentTime;
+        const targetFreq = 300 + Math.sin(now * 0.04) * 100 + this.intensity * 40;
+        this.ambientFilter.frequency.linearRampToValueAtTime(targetFreq, now + 0.1);
+        this.ambientGain.gain.linearRampToValueAtTime(0.05 + this.intensity * 0.015, now + 0.1);
+      }
+
+      enterVoid() {
+        if (this.isVoid) return;
+        this.isVoid = true;
+        this.elements.orb.classList.add('void');
+        this.elements.stageName.textContent = 'VOID';
+        const now = this.ctx.currentTime;
+        this.layerGains.strings.gain.linearRampToValueAtTime(0.15, now + 2);
+        this.layerGains.harmonics.gain.linearRampToValueAtTime(0, now + 2);
+        this.layerGains.drums.gain.linearRampToValueAtTime(0, now + 2);
+        this.layerGains.bass.gain.linearRampToValueAtTime(0, now + 2);
+        this.layerGains.melody.gain.linearRampToValueAtTime(0, now + 2);
+        this.layerGains.healing.gain.linearRampToValueAtTime(0.5, now + 2);
+        this.layerGains.binaural.gain.linearRampToValueAtTime(0.3, now + 2);
+        this.layerGains.overtones.gain.linearRampToValueAtTime(0.1, now + 2);
+      }
+
+      exitVoid() {
+        this.isVoid = false;
+        this.elements.orb.classList.remove('void');
+        this.elements.stageName.textContent = 'ACTIVE';
+        const now = this.ctx.currentTime;
+        this.layerGains.strings.gain.linearRampToValueAtTime(0.6, now + 2);
+        this.layerGains.healing.gain.linearRampToValueAtTime(0, now + 2);
+        this.layerGains.binaural.gain.linearRampToValueAtTime(0, now + 2);
+        this.layerGains.overtones.gain.linearRampToValueAtTime(0, now + 2);
+        this.updateModulation();
+      }
+
+      noteToFreq(note, octave) {
+        return 440 * Math.pow(2, (note + (octave - 4) * 12) / 12);
+      }
+
+      updateUI() {
+        this.elements.bpmDisplay.textContent = Math.round(this.bpm);
+        this.elements.intensityDisplay.textContent = Math.round(this.intensity * 10) + '%';
+        
+        this.analyser.getByteFrequencyData(this.dataArray);
+        this.waveBars.forEach((bar, i) => {
+          const start = i * 16; // Adjusted for more bars
+          const avg = this.dataArray.slice(start, start + 16).reduce((a, b) => a + b, 0) / 16;
+          bar.style.height = (avg / 255 * 60) + 'px';
+        });
+      }
+
+      animate() {
+        requestAnimationFrame(this.animate.bind(this));
+        if (!this.active) return;
+        
+        this.elements.orb.style.left = this.pos.x + '%';
+        this.elements.orb.style.top = this.pos.y + '%';
+      }
+
+      startSequencer() {
+        const tick = () => {
+          if (!this.active) return;
+          const now = this.ctx.currentTime;
+          this.playStep(now);
+          if (!this.isVoid) {
+            if (this.step % 2 === 0) this.playBass(now);
+            if (this.step % 4 === 0) this.playMelody(now);
+            if (this.step % 8 === 0) this.playOvertones(now);
+            if (this.step % 16 === 0) this.playBinaural(now);
+          }
+          this.updateUI();
+          this.step = (this.step + 1) % 32; // Longer sequence for variety
+          const interval = 60000 / this.bpm / 4;
+          setTimeout(tick, interval);
+        };
+        tick();
+      }
+
+      playStep(now) {
+        if (this.isVoid) {
+          this.playHealing(now);
+        } else {
+          this.playStrings(now);
+          this.playHarmonics(now);
+        }
+      }
+    }
+
+    new ModulatedVoidEngine();
+  </script>
+</body>
+</html>
