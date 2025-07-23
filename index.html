@@ -773,9 +773,9 @@
         this.limiter.attack.value = 0.002;
         this.limiter.release.value = 0.15;
         
-        // Master gain - significantly reduced
+        // Master gain - increased for louder music
         this.masterGain = this.ctx.createGain();
-        this.masterGain.gain.value = 0.15; // Lowered further
+        this.masterGain.gain.value = 0.45; 
         
         // Master compressor with musical settings
         this.compressor = this.ctx.createDynamicsCompressor();
@@ -1316,10 +1316,108 @@
         // Start void cycle
         this.voidCycleTime = 0;
         
+        // Start heavenly soundscape
+        this.playHeavenlySoundscape();
+        
         // Show theme text
         this.elements.themeText.textContent = this.themes.void.text;
         this.elements.themeText.classList.add('visible');
         setTimeout(() => this.elements.themeText.classList.remove('visible'), 5000);
+      }
+
+      playHeavenlySoundscape() {
+        this.playHeavenlyPad();
+        this.playHeavenlyChimes();
+        setTimeout(() => {
+          if (this.voidPhase && this.active) {
+            this.playHeavenlySoundscape();
+          }
+        }, 20000); // Loop every 20 seconds with overlap
+      }
+
+      playHeavenlyPad() {
+        const now = this.ctx.currentTime;
+        const duration = 25;
+        
+        // Multiple layers for richness
+        for (let layer = 0; layer < 3; layer++) {
+          const baseFreq = 110 * Math.pow(2, layer / 3);
+          for (let i = 0; i < 4; i++) {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            const filter = this.ctx.createBiquadFilter();
+            const lfo = this.ctx.createOscillator();
+            const lfoGain = this.ctx.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.value = baseFreq * Math.pow(2, i / 12);
+            osc.detune.value = (i - 2) * 5;
+            
+            filter.type = 'lowpass';
+            filter.frequency.value = 400;
+            filter.Q.value = 0.3;
+            
+            lfo.type = 'sine';
+            lfo.frequency.value = 0.1 + layer * 0.05;
+            lfoGain.gain.value = 50;
+            lfo.connect(lfoGain);
+            lfoGain.connect(filter.frequency);
+            
+            // Slow fade
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(0.012, now + 8); 
+            gain.gain.setValueAtTime(0.012, now + duration - 8);
+            gain.gain.linearRampToValueAtTime(0, now + duration);
+            
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(this.convolver);
+            gain.connect(this.masterGain);
+            
+            lfo.start(now);
+            osc.start(now);
+            lfo.stop(now + duration);
+            osc.stop(now + duration);
+          }
+        }
+      }
+
+      playHeavenlyChimes() {
+        const now = this.ctx.currentTime;
+        const chimes = 3 + Math.floor(Math.random() * 3);
+        
+        for (let c = 0; c < chimes; c++) {
+          setTimeout(() => {
+            const freq = 880 + Math.random() * 440;
+            
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            const env = this.ctx.createGain();
+            const filter = this.ctx.createBiquadFilter();
+            
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            
+            filter.type = 'highpass';
+            filter.frequency.value = 2000;
+            filter.Q.value = 1;
+            
+            env.gain.setValueAtTime(0, this.ctx.currentTime);
+            env.gain.linearRampToValueAtTime(0.1, this.ctx.currentTime + 0.05);
+            env.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 5);
+            
+            gain.gain.value = 0.08;
+            
+            osc.connect(filter);
+            filter.connect(env);
+            env.connect(gain);
+            gain.connect(this.convolver);
+            gain.connect(this.masterGain);
+            
+            osc.start(this.ctx.currentTime);
+            osc.stop(this.ctx.currentTime + 5);
+          }, Math.random() * 10000);
+        }
       }
 
       updateTechniques(avgMotion, variance) {
@@ -2033,10 +2131,10 @@
         lfo.connect(lfoGain);
         lfoGain.connect(filter.frequency);
         
-        // Resonant filter
-        filter.type = 'bandpass';
-        filter.frequency.value = freq;
-        filter.Q.value = 15 + this.intensity * 5;
+        // Lowpass instead of bandpass to avoid feedback
+        filter.type = 'lowpass';
+        filter.frequency.value = freq * 2;
+        filter.Q.value = 0.5; // Low Q for smooth sound
         
         // Very slow envelope
         env.gain.setValueAtTime(0, now);
@@ -2169,9 +2267,10 @@
         
         if (!this.allocateVoice('texture', noise, gain, 2)) return;
         
-        filter.type = 'bandpass';
-        filter.frequency.value = 500 + Math.random() * 1500;
-        filter.Q.value = 20;
+        // Change to lowpass to avoid resonance
+        filter.type = 'lowpass';
+        filter.frequency.value = 1000 + Math.random() * 2000;
+        filter.Q.value = 0.5; // Low Q
         
         env.gain.setValueAtTime(0, now);
         env.gain.linearRampToValueAtTime(0.12, now + 0.5); // Reduced
@@ -2329,10 +2428,10 @@
         breathNoise.buffer = noiseBuffer;
         breathNoise.loop = true;
         
-        // Resonant filter
+        // Resonant filter - reduced Q
         filter.type = 'bandpass';
         filter.frequency.value = freq * 1.5;
-        filter.Q.value = 5;
+        filter.Q.value = 2; // Reduced from 5
         
         // Woodwind envelope
         env.gain.setValueAtTime(0, now);
